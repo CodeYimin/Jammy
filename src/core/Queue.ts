@@ -167,7 +167,7 @@ export class Queue<T extends Player = Player> {
     // Lock the queue to guarantee safe access
     this.queueLock = true;
 
-    const isLastTrack = this._currentTrackIndex >= this._tracks.length;
+    const isLastTrack = this._currentTrackIndex + 1 >= this._tracks.length;
 
     if (this.repeatMode === "track") {
       // Repeat current track
@@ -315,16 +315,6 @@ export class Queue<T extends Player = Player> {
   //   return false;
   // }
 
-  // const track = this.currentTrack.metadata;
-  // if (track.isCustomTrack()) {
-  //   return false;
-  // }
-
-  // const newTrack = new YoutubeTrack(track.info, this.player, { seek: time });
-  // this.enqueue([newTrack], true);
-  // this._audioPlayer.stop();
-  // this.player.emit("onSeek", [this, newTrack, time]);
-  // return true;
   // }
 
   /**
