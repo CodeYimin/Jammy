@@ -361,8 +361,8 @@ export class Queue<T extends Player = Player> {
       this._tracks.push(...tracks);
     }
 
-    if (this.length > 0 && this.length === tracks.length && this.isIdle) {
-      this.play(0);
+    if (this.length && this.isIdle) {
+      this.play(this.length - tracks.length);
     }
 
     this.player.emit("onTracksAdd", this, tracks);
