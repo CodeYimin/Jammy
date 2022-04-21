@@ -224,7 +224,7 @@ export class Queue<T extends Player = Player> {
 
     voiceConnection.on<"stateChange">(
       "stateChange",
-      async (oldState, newState) => {
+      async (_oldState, newState) => {
         if (newState.status === VoiceConnectionStatus.Disconnected) {
           if (
             newState.reason ===

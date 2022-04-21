@@ -11,7 +11,11 @@ async function start() {
 
   const client = new Client({
     intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
-    botGuilds: ["393563835019165716", "756250551863214110"],
+    botGuilds: [
+      "393563835019165716",
+      "756250551863214110",
+      "965343636537634838",
+    ],
     silent: false,
   });
 
