@@ -22,22 +22,27 @@ export class Play {
     interaction: VoiceCommandInteraction
   ) {
     const queue = this.player.queue(interaction.guild);
-    const tracks = await Track.from(query);
+    const foundTracks = await Track.from(query);
     const responseEmbed = new MessageEmbed();
 
     const voiceChannel = interaction.member.voice.channel;
 
-    if (!tracks.length) {
+    if (!foundTracks.length) {
       responseEmbed.setDescription("No matches found :pouting_cat:");
     } else {
-      queue.join(voiceChannel);
-      queue.addTracks(tracks);
+      if (!queue.voiceConnection) {
+        queue.join(voiceChannel);
+      }
 
-      if (tracks.length === 1) {
-        const track = tracks[0];
+      queue.addTracks(foundTracks);
+
+      if (foundTracks.length === 1) {
+        const track = foundTracks[0];
         responseEmbed.setDescription(`Queued [${track.title}](${track.url})`);
       } else {
-        responseEmbed.setDescription(`Queued **${tracks.length}** tracks.`);
+        responseEmbed.setDescription(
+          `Queued **${foundTracks.length}** tracks.`
+        );
       }
     }
 
