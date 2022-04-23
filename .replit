@@ -1,4 +1,4 @@
-run="npm run build && npm run prod"
+run="npm run prod"
 
 [nix]
 channel = "stable-21_11"

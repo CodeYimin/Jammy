@@ -1,4 +1,5 @@
 import { importx } from "@discordx/importer";
+import axios from "axios";
 import { Client, DIService } from "discordx";
 import "dotenv/config";
 import express from "express";
@@ -8,19 +9,38 @@ import { container } from "tsyringe";
 import { Player } from "./core";
 import { ErrorHandler } from "./guards/ErrorHandler";
 
-function startReplitKeepAliveServer(port: number) {
+function startReplitKeepAliveServer() {
+  const replitSlug = process.env.REPL_SLUG;
+  const replitOwner = process.env.REPL_OWNER;
+
+  if (!replitSlug || !replitOwner) {
+    return;
+  }
+
   const app = express();
+  const PORT = 8080;
 
   app.get("/", (req, res) => {
     res.sendStatus(200);
   });
 
-  app.listen(port, () => {
-    console.log(`Replit keep alive server listening on port ${port}`);
+  app.listen(PORT, () => {
+    console.log(`Replit keep alive server listening on port ${PORT}`);
   });
+
+  const replitUrl = `https://${replitSlug}.${replitOwner}.repl.co`;
+  const PING_INTERVAL = 1000 * 60 * 5; // 5 minutes
+
+  setInterval(() => {
+    axios.get(replitUrl).catch(() => {
+      // Do nothing
+    });
+  }, PING_INTERVAL);
 }
 
 async function start() {
+  startReplitKeepAliveServer();
+
   DIService.container = container;
   container.registerSingleton(Player);
 
@@ -44,11 +64,6 @@ async function start() {
     client.user?.setActivity({ name: "music", type: "LISTENING" });
 
     console.log(`Logged in as ${client.user?.tag || ""}!`);
-
-    const replitPort = parseInt(process.env.REPLIT_KEEPALIVE_PORT || "");
-    if (replitPort) {
-      startReplitKeepAliveServer(replitPort);
-    }
   });
 
   client.on("interactionCreate", (interaction) => {
