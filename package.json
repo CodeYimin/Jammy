@@ -8,8 +8,7 @@
   "scripts": {
     "start": "nodemon",
     "build": "tsc --build",
-    "prod": "node ./dist/main.js",
-    "replit-init": "npm config set prefix=$(pwd)/node_modules/node && export PATH=$(pwd)/node_modules/node/bin:$PATH && npm install"
+    "prod": "node ./dist/main.js"
   },
   "dependencies": {
     "@discordjs/opus": "github:discordjs/opus",
@@ -40,7 +39,6 @@
     "@typescript-eslint/parser": "^5.20.0",
     "concurrently": "^7.1.0",
     "eslint": "^8.14.0",
-    "node": "^16.14.2",
     "nodemon": "^2.0.15",
     "prisma": "^3.12.0",
     "ts-node": "^10.7.0",
