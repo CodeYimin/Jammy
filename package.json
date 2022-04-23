@@ -7,8 +7,9 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon",
+    "start:dist": "node ./dist/main.js",
     "build": "tsc --build",
-    "prod": "node ./dist/main.js"
+    "prod": "npm run build && npm run start:dist"
   },
   "dependencies": {
     "@discordjs/opus": "^0.7.0",

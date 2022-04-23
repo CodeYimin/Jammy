@@ -12,7 +12,7 @@ import { ErrorHandler } from "./guards/ErrorHandler";
 function startReplitKeepAliveServer() {
   const replitSlug = process.env.REPL_SLUG;
   const replitOwner = process.env.REPL_OWNER;
-
+  
   if (!replitSlug || !replitOwner) {
     return;
   }
@@ -39,8 +39,6 @@ function startReplitKeepAliveServer() {
 }
 
 async function start() {
-  startReplitKeepAliveServer();
-
   DIService.container = container;
   container.registerSingleton(Player);
 
@@ -64,6 +62,8 @@ async function start() {
     client.user?.setActivity({ name: "music", type: "LISTENING" });
 
     console.log(`Logged in as ${client.user?.tag || ""}!`);
+
+    startReplitKeepAliveServer();
   });
 
   client.on("interactionCreate", (interaction) => {
