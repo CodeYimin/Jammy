@@ -32,11 +32,7 @@ async function start() {
 
   const client = new Client({
     intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
-    botGuilds: [
-      "393563835019165716",
-      "756250551863214110",
-      "965343636537634838",
-    ],
+    botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
     silent: false,
     guards: [ErrorHandler],
   });
@@ -59,7 +55,7 @@ async function start() {
     client.executeInteraction(interaction);
   });
 
-  await importx(`${__dirname}/commands/**/*.ts`);
+  await importx(`${__dirname}/commands/**/*`);
 
   if (!process.env.BOT_TOKEN) {
     throw Error("BOT_TOKEN environment variable is not set");
