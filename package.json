@@ -9,7 +9,7 @@
     "start": "nodemon",
     "build": "tsc --build",
     "prod": "node ./dist/main.js",
-    "replit-init": "npm config set prefix=$(pwd)/node_modules/node && export PATH=$(pwd)/node_modules/node/bin:$PATH"
+    "replit-init": "npm config set prefix=$(pwd)/node_modules/node && export PATH=$(pwd)/node_modules/node/bin:$PATH && npm install"
   },
   "dependencies": {
     "@discordjs/opus": "github:discordjs/opus",
