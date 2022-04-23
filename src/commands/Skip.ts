@@ -47,6 +47,6 @@ export class Skip {
       await queue.play(newTrackIndex);
     }
 
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

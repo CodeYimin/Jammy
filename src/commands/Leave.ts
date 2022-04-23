@@ -23,6 +23,6 @@ export class Leave {
     });
 
     queue.leave();
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

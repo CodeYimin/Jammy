@@ -58,6 +58,6 @@ export class Current {
       },
     });
 
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

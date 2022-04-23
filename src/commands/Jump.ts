@@ -39,6 +39,6 @@ export class Jump {
       await queue.play(trackIndex);
     }
 
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

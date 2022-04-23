@@ -1,13 +1,21 @@
 import { importx } from "@discordx/importer";
 import { Client, DIService } from "discordx";
 import "dotenv/config";
+import { setToken } from "play-dl";
 import "reflect-metadata";
 import { container } from "tsyringe";
 import { Player } from "./core";
+import { ErrorHandler } from "./guards/ErrorHandler";
 
 async function start() {
   DIService.container = container;
   container.registerSingleton(Player);
+
+  await setToken({
+    youtube: {
+      cookie: process.env.YOUTUBE_COOKIE || "",
+    },
+  });
 
   const client = new Client({
     intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
@@ -17,6 +25,7 @@ async function start() {
       "965343636537634838",
     ],
     silent: false,
+    guards: [ErrorHandler],
   });
 
   client.once("ready", async () => {
@@ -25,7 +34,7 @@ async function start() {
 
     client.user?.setActivity({ name: "music", type: "LISTENING" });
 
-    console.log(`Logged in as ${client.user?.tag}!`);
+    console.log(`Logged in as ${client.user?.tag || ""}!`);
   });
 
   client.on("interactionCreate", (interaction) => {
@@ -40,4 +49,4 @@ async function start() {
   await client.login(process.env.BOT_TOKEN);
 }
 
-start();
+void start();

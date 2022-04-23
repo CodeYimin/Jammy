@@ -56,6 +56,6 @@ export class Queue {
         .join("") || "The queue is empty") +
       "```";
 
-    interaction.reply(response);
+    await interaction.reply(response);
   }
 }

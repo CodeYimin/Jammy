@@ -42,6 +42,6 @@ export class Volume {
       queue.setVolume(value);
     }
 
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

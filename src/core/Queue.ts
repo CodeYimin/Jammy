@@ -15,19 +15,6 @@ import { Player } from "./";
 import { Track } from "./Track";
 import { ErrorMessages } from "./types";
 
-/**
- * Wait promise
- *
- * @param time
- *
- * @returns
- */
-function wait(time: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time);
-  });
-}
-
 export type RepeatMode = "none" | "track" | "queue";
 
 /**
@@ -122,28 +109,31 @@ export class Queue<T extends Player = Player> {
   }
 
   constructor(public player: T, public guild: Guild) {
-    this.audioPlayer.on<"stateChange">("stateChange", (oldState, newState) => {
-      if (
-        oldState.status !== AudioPlayerStatus.Idle &&
-        newState.status === AudioPlayerStatus.Idle
-      ) {
-        // Non idle -> idle: Track finished playing
+    this.audioPlayer.on<"stateChange">(
+      "stateChange",
+      async (oldState, newState) => {
+        if (
+          oldState.status !== AudioPlayerStatus.Idle &&
+          newState.status === AudioPlayerStatus.Idle
+        ) {
+          // Non idle -> idle: Track finished playing
 
-        // Emit track end event
-        const track = oldState.resource.metadata as Track;
-        this.player.emit("onTrackFinish", this, track);
+          // Emit track end event
+          const track = oldState.resource.metadata as Track;
+          this.player.emit("onTrackFinish", this, track);
 
-        this.processQueue();
-      } else if (newState.status === AudioPlayerStatus.Playing) {
-        // Any -> Playing: A Track started playing
+          await this.processQueue();
+        } else if (newState.status === AudioPlayerStatus.Playing) {
+          // Any -> Playing: A Track started playing
 
-        newState.resource.volume?.setVolumeLogarithmic(this._volume / 100);
+          newState.resource.volume?.setVolumeLogarithmic(this._volume / 100);
 
-        // Emit track start event
-        const track = newState.resource.metadata as Track;
-        this.player.emit("onTrackStart", this, track);
+          // Emit track start event
+          const track = newState.resource.metadata as Track;
+          this.player.emit("onTrackStart", this, track);
+        }
       }
-    });
+    );
 
     this.audioPlayer.on("error", (error) => {
       this.player.emit("onError", this, error);
@@ -154,12 +144,13 @@ export class Queue<T extends Player = Player> {
    * Process queue
    * @returns
    */
-  private processQueue(): void {
+  private async processQueue(): Promise<void> {
     // If the queue is locked (already being processed), is empty, or the audio player is already playing something, return
     if (
       this.queueLock ||
       this.audioPlayer.state.status !== AudioPlayerStatus.Idle ||
-      this._currentTrackIndex === undefined
+      this._currentTrackIndex === undefined ||
+      !this.currentTrack
     ) {
       return;
     }
@@ -171,16 +162,16 @@ export class Queue<T extends Player = Player> {
 
     if (this.repeatMode === "track") {
       // Repeat current track
-      this.player.emit("onTrackRepeat", this, this.currentTrack!);
-      this.play(this._currentTrackIndex);
+      this.player.emit("onTrackRepeat", this, this.currentTrack);
+      await this.play(this._currentTrackIndex);
     } else if (!isLastTrack) {
       // Play next track
-      this.play(this._currentTrackIndex + 1);
+      await this.play(this._currentTrackIndex + 1);
     } else if (this._repeatMode === "queue") {
       // Repeat queue
       this.player.emit("onQueueRepeat", this);
       this._currentTrackIndex = 0;
-      this.play(this._currentTrackIndex);
+      await this.play(this._currentTrackIndex);
     } else {
       // Queue finish playing
       this._currentTrackIndex = undefined;
@@ -321,12 +312,12 @@ export class Queue<T extends Player = Player> {
    * Pause audio playback
    */
   public pause(): boolean {
-    if (!this.isPlaying) {
+    if (!this.isPlaying || !this.currentTrack) {
       return false;
     }
 
     this.audioPlayer.pause();
-    this.player.emit("onTrackPause", this, this.currentTrack!);
+    this.player.emit("onTrackPause", this, this.currentTrack);
     return true;
   }
 
@@ -334,12 +325,12 @@ export class Queue<T extends Player = Player> {
    * Resume audio playback
    */
   public resume(): boolean {
-    if (!this.isPaused) {
+    if (!this.isPaused || !this.currentTrack) {
       return false;
     }
 
     this.audioPlayer.unpause();
-    this.player.emit("onTrackResume", this, this.currentTrack!);
+    this.player.emit("onTrackResume", this, this.currentTrack);
 
     return true;
   }
@@ -354,7 +345,7 @@ export class Queue<T extends Player = Player> {
     this.player.emit("onRepeatModeUpdate", this, repeatMode);
   }
 
-  public addTracks(tracks: Track[], top?: boolean): void {
+  public async addTracks(tracks: Track[], top?: boolean): Promise<void> {
     if (top) {
       this._tracks.unshift(...tracks);
     } else {
@@ -362,7 +353,7 @@ export class Queue<T extends Player = Player> {
     }
 
     if (this.length && this.isIdle) {
-      this.play(this.length - tracks.length);
+      await this.play(this.length - tracks.length);
     }
 
     this.player.emit("onTracksAdd", this, tracks);

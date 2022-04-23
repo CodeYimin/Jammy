@@ -31,10 +31,10 @@ export class Play {
       responseEmbed.setDescription("No matches found :pouting_cat:");
     } else {
       if (!queue.voiceConnection) {
-        queue.join(voiceChannel);
+        await queue.join(voiceChannel);
       }
 
-      queue.addTracks(foundTracks);
+      await queue.addTracks(foundTracks);
 
       if (foundTracks.length === 1) {
         const track = foundTracks[0];
@@ -46,6 +46,6 @@ export class Play {
       }
     }
 
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

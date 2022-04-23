@@ -28,6 +28,6 @@ export class Pause {
       responseEmbed.setDescription(`There is no music playing... :thinking:`);
     }
 
-    interaction.reply({ embeds: [responseEmbed] });
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }
