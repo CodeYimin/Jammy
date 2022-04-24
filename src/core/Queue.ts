@@ -29,7 +29,6 @@ export class Queue<T extends Player = Player> {
   private _repeatMode: RepeatMode = "none";
 
   private queueLock = false;
-  private readyLock = false;
 
   public get tracks(): Track[] {
     return this._tracks;
@@ -118,19 +117,11 @@ export class Queue<T extends Player = Player> {
         ) {
           // Non idle -> idle: Track finished playing
 
-          // Emit track end event
-          const track = oldState.resource.metadata as Track;
-          this.player.emit("onTrackFinish", this, track);
-
           await this.processQueue();
         } else if (newState.status === AudioPlayerStatus.Playing) {
           // Any -> Playing: A Track started playing
 
           newState.resource.volume?.setVolumeLogarithmic(this._volume / 100);
-
-          // Emit track start event
-          const track = newState.resource.metadata as Track;
-          this.player.emit("onTrackStart", this, track);
         }
       }
     );
@@ -162,20 +153,17 @@ export class Queue<T extends Player = Player> {
 
     if (this.repeatMode === "track") {
       // Repeat current track
-      this.player.emit("onTrackRepeat", this, this.currentTrack);
       await this.play(this._currentTrackIndex);
     } else if (!isLastTrack) {
       // Play next track
       await this.play(this._currentTrackIndex + 1);
     } else if (this._repeatMode === "queue") {
       // Repeat queue
-      this.player.emit("onQueueRepeat", this);
       this._currentTrackIndex = 0;
       await this.play(this._currentTrackIndex);
     } else {
       // Queue finish playing
       this._currentTrackIndex = undefined;
-      this.player.emit("onQueueFinish", this);
     }
 
     this.queueLock = false;
@@ -245,7 +233,6 @@ export class Queue<T extends Player = Player> {
     }
 
     this._voiceConnection = voiceConnection;
-    this.player.emit("onVoiceJoin", this, channel);
   }
 
   /**
@@ -254,7 +241,6 @@ export class Queue<T extends Player = Player> {
   public leave(): void {
     this._tracks = [];
     this.queueLock = false;
-    this.readyLock = false;
 
     this.audioPlayer.stop(true);
     if (this._voiceConnection) {
@@ -267,7 +253,6 @@ export class Queue<T extends Player = Player> {
     }
 
     this.player.queues.delete(this.guild.id);
-    this.player.emit("onVoiceLeave", this);
   }
 
   public async play(trackIndex: number): Promise<void> {
@@ -291,7 +276,6 @@ export class Queue<T extends Player = Player> {
     }
 
     this._volume = volume;
-    this.player.emit("onVolumeUpdate", this, volume);
 
     if (this.currentAudioResource) {
       this.currentAudioResource.volume?.setVolumeLogarithmic(volume / 100);
@@ -317,7 +301,6 @@ export class Queue<T extends Player = Player> {
     }
 
     this.audioPlayer.pause();
-    this.player.emit("onTrackPause", this, this.currentTrack);
     return true;
   }
 
@@ -330,19 +313,16 @@ export class Queue<T extends Player = Player> {
     }
 
     this.audioPlayer.unpause();
-    this.player.emit("onTrackResume", this, this.currentTrack);
 
     return true;
   }
 
   public shuffle(): void {
     this._tracks = _.shuffle(this._tracks);
-    this.player.emit("onQueueShuffle", this, this._tracks);
   }
 
   public setRepeatMode(repeatMode: RepeatMode): void {
     this._repeatMode = repeatMode;
-    this.player.emit("onRepeatModeUpdate", this, repeatMode);
   }
 
   public async addTracks(tracks: Track[], top?: boolean): Promise<void> {
@@ -355,8 +335,6 @@ export class Queue<T extends Player = Player> {
     if (this.length && this.isIdle) {
       await this.play(this.length - tracks.length);
     }
-
-    this.player.emit("onTracksAdd", this, tracks);
   }
 
   public removeTrack(index: number): void {
@@ -364,9 +342,19 @@ export class Queue<T extends Player = Player> {
       throw new Error("Index out of bounds");
     }
 
-    const removedTrack = this._tracks.splice(index, 1)[0];
-    this.player.emit("onTrackRemove", this, removedTrack);
+    this._tracks.splice(index, 1);
+
+    const isCurrentTrack = this._currentTrackIndex === index;
+    if (!isCurrentTrack) {
+      return;
+    }
+
+    const isLastTrack = index === this.length - 1;
+    if (isLastTrack) {
+      this._currentTrackIndex!--;
+    }
 
     this.audioPlayer.stop();
+    this._tracks.splice(index, 1);
   }
 }

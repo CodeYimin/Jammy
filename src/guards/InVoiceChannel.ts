@@ -2,7 +2,7 @@ import { CommandInteraction, MessageEmbed } from "discord.js";
 import { GuardFunction } from "discordx";
 import { replyOrFollowUp } from "../util/replyOrFollowUp";
 
-export const InVoiceChannel: GuardFunction<CommandInteraction> = (
+export const InVoiceChannel: GuardFunction<CommandInteraction> = async (
   interaction,
   _client,
   next
@@ -13,13 +13,15 @@ export const InVoiceChannel: GuardFunction<CommandInteraction> = (
   });
 
   if (!interaction.inCachedGuild()) {
-    return replyOrFollowUp(interaction, { embeds: [failEmbed] });
+    await replyOrFollowUp(interaction, { embeds: [failEmbed] });
+    return;
   }
 
   const member = interaction.member;
   if (!member.voice.channel) {
-    return replyOrFollowUp(interaction, { embeds: [failEmbed] });
+    await replyOrFollowUp(interaction, { embeds: [failEmbed] });
+    return;
   }
 
-  return next();
+  await next();
 };

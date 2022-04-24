@@ -2,7 +2,7 @@ import { CommandInteraction, MessageEmbed } from "discord.js";
 import { GuardFunction } from "discordx";
 import { replyOrFollowUp } from "../util/replyOrFollowUp";
 
-export const InGuild: GuardFunction<CommandInteraction> = (
+export const InGuild: GuardFunction<CommandInteraction> = async (
   interaction,
   _client,
   next
@@ -12,8 +12,9 @@ export const InGuild: GuardFunction<CommandInteraction> = (
   });
 
   if (!interaction.inCachedGuild()) {
-    return replyOrFollowUp(interaction, { embeds: [failEmbed] });
+    await replyOrFollowUp(interaction, { embeds: [failEmbed] });
+    return;
   }
 
-  return next();
+  await next();
 };

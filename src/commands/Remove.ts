@@ -28,7 +28,7 @@ export class Remove {
 
     const trackIndex = trackNumber - 1;
 
-    if (trackIndex < 0 && trackIndex >= queue.length) {
+    if (trackIndex < 0 || trackIndex >= queue.length) {
       responseEmbed.setDescription(ErrorMessages.TrackNotExist);
     } else {
       responseEmbed.setDescription(

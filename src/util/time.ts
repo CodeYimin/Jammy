@@ -1,41 +1,34 @@
 import { numberPadding } from "./numbers";
 
-export function secondsToFormattedString(
-  totalSeconds: number,
-  mode: "colon" | "abbrevation"
-): string {
-  let duration: string;
+export function secondsToFormattedString(totalSeconds: number): string {
+  let duration = "";
 
   const seconds = totalSeconds % 60;
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const days = Math.floor(totalSeconds / 86400);
 
-  // Seconds
-  duration = numberPadding(seconds, 2) + (mode === "colon" ? "" : "s");
-  // Minutes
-  duration =
-    numberPadding(minutes, 2) + (mode === "colon" ? ":" : "m ") + duration;
-  // Hours
-  if (totalSeconds >= 3600) {
-    duration =
-      numberPadding(hours, 2) + (mode === "colon" ? ":" : "h ") + duration;
+  const hasMinutes = totalSeconds > 60;
+  const hasHours = totalSeconds > 3600;
+  const hasDays = totalSeconds > 86400;
+
+  if (hasDays) {
+    duration += `${days > 9 ? numberPadding(days, 2) : days}:`;
   }
-  // Days
-  if (totalSeconds >= 86400) {
-    duration =
-      numberPadding(days, 2) + (mode === "colon" ? ":" : "d ") + duration;
+
+  if (hasHours) {
+    duration += `${hours > 9 || hasDays ? numberPadding(hours, 2) : hours}:`;
   }
+
+  if (hasMinutes) {
+    duration += `${
+      minutes > 9 || hasHours ? numberPadding(minutes, 2) : minutes
+    }:`;
+  } else {
+    duration += "0:";
+  }
+
+  duration += numberPadding(seconds, 2);
 
   return duration;
-}
-
-export function msToHoursMinutesSeconds(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-
-  const seconds = totalSeconds % 60;
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const hours = Math.floor(totalSeconds / 3600);
-
-  return `${hours} hours ${minutes} minutes ${seconds} seconds`;
 }

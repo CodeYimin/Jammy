@@ -4,8 +4,10 @@ import { Discord, Guard, Slash, SlashOption } from "discordx";
 import { injectable } from "tsyringe";
 import { Player } from "../core";
 import { ErrorMessages } from "../core/types";
-import { VoiceCommandInteraction } from "../core/types/Interactions";
+import { Deferred, VoiceCommandInteraction } from "../core/types/Interactions";
+import { Defer } from "../guards/Defer";
 import { InVoiceChannel } from "../guards/InVoiceChannel";
+import { replyOrFollowUp } from "../util/replyOrFollowUp";
 
 @Discord()
 @injectable()
@@ -14,7 +16,7 @@ export class Back {
 
   @Slash("back")
   @Description("Skip to the previous track.")
-  @Guard(InVoiceChannel)
+  @Guard(InVoiceChannel, Defer)
   private async back(
     @SlashOption("increment", {
       type: "INTEGER",
@@ -22,7 +24,7 @@ export class Back {
       required: false,
     })
     increment: number | undefined,
-    interaction: VoiceCommandInteraction
+    interaction: Deferred<VoiceCommandInteraction>
   ) {
     const queue = this.player.queue(interaction.guild);
     const responseEmbed = new MessageEmbed();
@@ -47,6 +49,6 @@ export class Back {
       await queue.play(newTrackIndex);
     }
 
-    await interaction.reply({ embeds: [responseEmbed] });
+    await replyOrFollowUp(interaction, { embeds: [responseEmbed] });
   }
 }

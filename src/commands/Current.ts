@@ -6,6 +6,7 @@ import { Player } from "../core";
 import { ErrorMessages } from "../core/types";
 import { GuildCommandInteraction } from "../core/types/Interactions";
 import { InGuild } from "../guards/InGuild";
+import { numberToSuffixString } from "../util/numbers";
 import { secondsToFormattedString } from "../util/time";
 
 @Discord()
@@ -30,16 +31,10 @@ export class Current {
     }
 
     const durationPlayed = Math.round(queue.trackPlaybackDuration / 1000);
-    const durationPlayedStr = secondsToFormattedString(
-      durationPlayed,
-      "abbrevation"
-    );
+    const durationPlayedStr = secondsToFormattedString(durationPlayed);
 
     const totalDuration = track.durationInSec;
-    const totalDurationStr = secondsToFormattedString(
-      totalDuration,
-      "abbrevation"
-    );
+    const totalDurationStr = secondsToFormattedString(totalDuration);
 
     const loadingBarSize = 20;
     const loadingBarCursorIndex = Math.max(
@@ -51,11 +46,22 @@ export class Current {
       "🔵" +
       "▬".repeat(loadingBarSize - loadingBarCursorIndex - 1);
 
+    let description = `[${track.title}](${track.url})\n${track.channel}`;
+
+    if (track.views) {
+      description += ` • ${numberToSuffixString(track.views)} views`;
+    }
+
+    if (track.likes) {
+      description += ` • ${numberToSuffixString(track.likes)} likes`;
+    }
+
     const responseEmbed = new MessageEmbed({
-      description: `[${track.title}](${track.url})`,
+      description,
       footer: {
-        text: `${loadingBar} ${durationPlayedStr} / ${totalDurationStr}`,
+        text: `${loadingBar}\n${durationPlayedStr} / ${totalDurationStr}`,
       },
+      thumbnail: { url: track.thumbnail },
     });
 
     await interaction.reply({ embeds: [responseEmbed] });

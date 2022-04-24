@@ -4,7 +4,8 @@ import { Discord, Guard, Slash, SlashOption } from "discordx";
 import { injectable } from "tsyringe";
 import { Player } from "../core";
 import { ErrorMessages } from "../core/types";
-import { VoiceCommandInteraction } from "../core/types/Interactions";
+import { Deferred, VoiceCommandInteraction } from "../core/types/Interactions";
+import { Defer } from "../guards/Defer";
 import { InVoiceChannel } from "../guards/InVoiceChannel";
 
 @Discord()
@@ -15,14 +16,14 @@ export class Jump {
   @Slash("jump")
   @Slash("go")
   @Description("Jump to a track number.")
-  @Guard(InVoiceChannel)
+  @Guard(InVoiceChannel, Defer)
   private async jump(
     @SlashOption("track_number", {
       description: "The track number to skip to.",
       type: "INTEGER",
     })
     trackNumber: number,
-    interaction: VoiceCommandInteraction
+    interaction: Deferred<VoiceCommandInteraction>
   ) {
     const queue = this.player.queue(interaction.guild);
     const responseEmbed = new MessageEmbed();
@@ -32,13 +33,15 @@ export class Jump {
     if (trackIndex < 0 || trackIndex >= queue.tracks.length) {
       responseEmbed.setDescription(ErrorMessages.TrackNotExist);
     } else {
+      const track = queue.tracks[trackIndex];
+
       responseEmbed.setDescription(
-        `Jumped to track **${trackNumber}**. :smirk_cat:`
+        `Jumped to [${track.title}](${track.url}). :smirk_cat:`
       );
 
       await queue.play(trackIndex);
     }
 
-    await interaction.reply({ embeds: [responseEmbed] });
+    await interaction.editReply({ embeds: [responseEmbed] });
   }
 }

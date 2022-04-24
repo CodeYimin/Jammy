@@ -1,4 +1,5 @@
 import { Description } from "@discordx/utilities";
+import { MessageEmbed } from "discord.js";
 import { Discord, Guard, Slash } from "discordx";
 import { injectable } from "tsyringe";
 import { Player } from "../core";
@@ -16,46 +17,33 @@ export class Queue {
   @Guard(InGuild)
   private async queue(interaction: GuildCommandInteraction) {
     const queue = this.player.queue(interaction.guild);
-    const response =
-      "```nim\n" +
-      (queue.tracks
-        .map((track, index) => {
-          const isCurrentTrackIndex: boolean =
-            index === queue.currentTrackIndex;
-          const titleLength: number = 40 - (index + 1).toString().length;
+    const responseEmbed = new MessageEmbed({
+      title: "Current Queue",
+      description: `${queue.length} tracks`,
+      fields: queue.tracks.map((track, index) => {
+        const isPlaying = index === queue.currentTrackIndex;
 
-          let title: string;
-          if (track.title.length > titleLength) {
-            if (track.title[titleLength - 2] === " ") {
-              title = track.title.substring(0, titleLength - 2) + "… ";
-            } else {
-              title = track.title.substring(0, titleLength - 1) + "…";
-            }
-          } else {
-            title = track.title + " ".repeat(titleLength - track.title.length);
-          }
+        const durationPlayed = isPlaying
+          ? Math.round(queue.trackPlaybackDuration / 1000)
+          : undefined;
+        const durationPlayedStr = durationPlayed
+          ? secondsToFormattedString(durationPlayed)
+          : "";
 
-          let durationRemaining: number | undefined;
+        const totalDuration = track.durationInSec;
+        const totalDurationStr = secondsToFormattedString(totalDuration);
 
-          if (isCurrentTrackIndex && queue.isPlaying) {
-            durationRemaining =
-              track.durationInSec -
-              Math.round(queue.trackPlaybackDuration / 1000);
-          }
+        return {
+          name: `${isPlaying ? ":arrow_right:  " : ""}${index + 1}. ${
+            track.title
+          }`,
+          value: `${track.channel} - ${durationPlayedStr} ${
+            isPlaying ? "/" : ""
+          } ${totalDurationStr}`,
+        };
+      }),
+    });
 
-          return (
-            (isCurrentTrackIndex ? "     ⬐ current track\n" : "") +
-            ` ${index + 1}) ${title} ` +
-            (durationRemaining
-              ? `${secondsToFormattedString(durationRemaining, "colon")} left`
-              : secondsToFormattedString(track.durationInSec, "colon")) +
-            "\n" +
-            (isCurrentTrackIndex ? "     ⬑ current track\n" : "")
-          );
-        })
-        .join("") || "The queue is empty") +
-      "```";
-
-    await interaction.reply(response);
+    await interaction.reply({ embeds: [responseEmbed] });
   }
 }

@@ -4,7 +4,8 @@ import { Discord, Guard, Slash, SlashOption } from "discordx";
 import { injectable } from "tsyringe";
 import { Player } from "../core";
 import { ErrorMessages } from "../core/types/ErrorMessages";
-import { VoiceCommandInteraction } from "../core/types/Interactions";
+import { Deferred, VoiceCommandInteraction } from "../core/types/Interactions";
+import { Defer } from "../guards/Defer";
 import { InVoiceChannel } from "../guards/InVoiceChannel";
 
 @Discord()
@@ -14,7 +15,7 @@ export class Skip {
 
   @Slash("skip")
   @Description("Skip to the next track.")
-  @Guard(InVoiceChannel)
+  @Guard(InVoiceChannel, Defer)
   private async skip(
     @SlashOption("increment", {
       type: "INTEGER",
@@ -22,7 +23,7 @@ export class Skip {
       required: false,
     })
     increment: number | undefined,
-    interaction: VoiceCommandInteraction
+    interaction: Deferred<VoiceCommandInteraction>
   ) {
     const queue = this.player.queue(interaction.guild);
     const responseEmbed = new MessageEmbed();
@@ -47,6 +48,6 @@ export class Skip {
       await queue.play(newTrackIndex);
     }
 
-    await interaction.reply({ embeds: [responseEmbed] });
+    await interaction.editReply({ embeds: [responseEmbed] });
   }
 }

@@ -11,3 +11,8 @@ export type VoiceCommandInteraction = GuildCommandInteraction & {
     };
   };
 };
+
+export type Deferred<T extends CommandInteraction> = T & {
+  reply: never;
+  deferReply: never;
+};

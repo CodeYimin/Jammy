@@ -1,26 +1,48 @@
 import { AudioResource, createAudioResource } from "@discordjs/voice";
 import play, {
+  InfoData,
   playlist_info,
   search,
   video_basic_info,
+  YouTubeVideo,
   yt_validate,
 } from "play-dl";
 
 export interface TrackData {
   url: string;
   title: string;
+  channel: string;
   durationInSec: number;
+  thumbnail: string;
+  views?: number;
+  likes?: number;
 }
 
 export class Track implements TrackData {
   public readonly url: string;
   public readonly title: string;
+  public readonly channel: string;
   public readonly durationInSec: number;
+  public readonly thumbnail: string;
+  public readonly views?: number;
+  public readonly likes?: number;
 
-  constructor({ url, title, durationInSec: durationSec }: TrackData) {
+  constructor({
+    url,
+    title,
+    channel,
+    durationInSec,
+    thumbnail,
+    views,
+    likes,
+  }: TrackData) {
     this.url = url;
     this.title = title;
-    this.durationInSec = durationSec;
+    this.channel = channel;
+    this.durationInSec = durationInSec;
+    this.thumbnail = thumbnail;
+    this.views = views;
+    this.likes = likes;
   }
 
   public async createAudioResource(): Promise<AudioResource<Track>> {
@@ -33,14 +55,28 @@ export class Track implements TrackData {
     return resource;
   }
 
+  public static fromVideoDetails(details: YouTubeVideo) {
+    return new Track({
+      url: details.url,
+      title: details.title || details.url,
+      channel: details.channel?.name || "Unknown",
+      thumbnail: details.thumbnails[0].url,
+      durationInSec: details.durationInSec,
+      views: details.views || undefined,
+      likes: details.likes || undefined,
+    });
+  }
+
+  public static fromVideoInfo(info: InfoData) {
+    return this.fromVideoDetails(info.video_details);
+  }
+
   /**
    *
    * @param query Can be playlist url, video url, or video search term
    * @returns
    */
-  public static async from(query: string): Promise<Track[]> {
-    const tracks: Track[] = [];
-
+  public static async fromQuery(query: string): Promise<Track[]> {
     const queryType = yt_validate(query);
 
     if (!queryType) {
@@ -51,41 +87,25 @@ export class Track implements TrackData {
       const playlist = await playlist_info(query, { incomplete: true });
       const videos = await playlist.all_videos();
 
-      for (const video of videos) {
-        tracks.push(
-          new Track({
-            url: video.url,
-            title: video.title || video.url,
-            durationInSec: video.durationInSec,
-          })
-        );
-      }
+      return videos.map((video) => Track.fromVideoDetails(video));
     } else if (queryType === "video") {
-      const video = await video_basic_info(query);
-      const videoDetails = video.video_details;
+      const videoInfo = await video_basic_info(query);
 
-      tracks.push(
-        new Track({
-          url: videoDetails.url,
-          title: videoDetails.title || videoDetails.url,
-          durationInSec: videoDetails.durationInSec,
-        })
-      );
+      return [this.fromVideoInfo(videoInfo)];
     } else {
-      const searchResults = await search(query);
-      const firstVideo = searchResults.find((video) => video.type === "video");
+      const searchResults = await search(query, {
+        source: {
+          youtube: "video",
+        },
+        limit: 1,
+      });
+      const videoDetails = searchResults[0];
 
-      if (firstVideo) {
-        tracks.push(
-          new Track({
-            url: firstVideo.url,
-            title: firstVideo.title || firstVideo.url,
-            durationInSec: firstVideo.durationInSec,
-          })
-        );
+      if (!videoDetails) {
+        return [];
       }
-    }
 
-    return tracks;
+      return [this.fromVideoDetails(videoDetails)];
+    }
   }
 }
