@@ -239,7 +239,7 @@ export class Queue<T extends Player = Player> {
    */
   public leave(): void {
     this._tracks = [];
-    this.queueLock = false;
+    this.queueLock = true;
 
     this.audioPlayer.stop(true);
     if (this._voiceConnection) {
