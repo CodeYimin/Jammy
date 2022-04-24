@@ -46,7 +46,7 @@ export class Play {
         responseEmbed
           .setDescription(`Queued **${foundTracks.length}** tracks.`)
           .setFooter({
-            text: `Track numbers: ${queue.length - foundTracks.length} - ${
+            text: `Track numbers: ${queue.length - foundTracks.length + 1} - ${
               queue.length
             }`,
           });

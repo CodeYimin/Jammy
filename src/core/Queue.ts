@@ -140,8 +140,7 @@ export class Queue<T extends Player = Player> {
     if (
       this.queueLock ||
       this.audioPlayer.state.status !== AudioPlayerStatus.Idle ||
-      this._currentTrackIndex === undefined ||
-      !this.currentTrack
+      this._currentTrackIndex === undefined
     ) {
       return;
     }
@@ -149,7 +148,7 @@ export class Queue<T extends Player = Player> {
     // Lock the queue to guarantee safe access
     this.queueLock = true;
 
-    const isLastTrack = this._currentTrackIndex + 1 >= this._tracks.length;
+    const isLastTrack = this._currentTrackIndex + 1 > this._tracks.length;
 
     if (this.repeatMode === "track") {
       // Repeat current track
@@ -344,17 +343,24 @@ export class Queue<T extends Player = Player> {
 
     this._tracks.splice(index, 1);
 
-    const isCurrentTrack = this._currentTrackIndex === index;
-    if (!isCurrentTrack) {
+    if (this._currentTrackIndex === undefined) {
       return;
     }
 
-    const isLastTrack = index === this.length - 1;
-    if (isLastTrack) {
-      this._currentTrackIndex!--;
+    const isBeforeCurrentTrack = index < this._currentTrackIndex;
+    if (isBeforeCurrentTrack) {
+      this._currentTrackIndex--;
+      return;
     }
 
-    this.audioPlayer.stop();
-    this._tracks.splice(index, 1);
+    const isCurrentTrack = this._currentTrackIndex === index;
+    if (isCurrentTrack) {
+      this._currentTrackIndex--;
+      if (this._repeatMode === "track") {
+        this._currentTrackIndex = undefined;
+      }
+      this.audioPlayer.stop();
+      return;
+    }
   }
 }
